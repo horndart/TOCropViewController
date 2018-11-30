@@ -263,6 +263,11 @@ The minimum croping aspect ratio. If set, user is prevented from setting croppin
  */
 - (void)moveCroppedContentToCenterAnimated:(BOOL)animated;
 
+/*
+ if YES it will disable translucency effect
+ */
+- (void)setTranslucencyOff:(BOOL)disableTranslucency;
+
 @end
 
 NS_ASSUME_NONNULL_END

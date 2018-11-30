@@ -160,6 +160,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) NSTimeInterval cropAdjustingDelay;
 
 /**
+ set Adjusting new crop area enabled
+ */
+@property (nonatomic, assign) BOOL adjustNewCropEnabled;
+
+/**
 The minimum croping aspect ratio. If set, user is prevented from setting cropping rectangle to lower aspect ratio than defined by the parameter.
 */
 @property (nonatomic, assign) CGFloat minimumAspectRatio;

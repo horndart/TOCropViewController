@@ -149,6 +149,7 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     self.restoreImageCropFrame = CGRectZero;
     self.restoreAngle = 0;
     self.cropAdjustingDelay = kTOCropTimerDuration;
+    self.adjustNewCropEnabled = YES;
     self.cropViewPadding = kTOCropViewPadding;
     self.maximumZoomScale = kTOMaximumZoomScale;
     
@@ -853,10 +854,12 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
 #pragma mark - Timer -
 - (void)startResetTimer
 {
-    if (self.resetTimer)
-        return;
-    
-    self.resetTimer = [NSTimer scheduledTimerWithTimeInterval:self.cropAdjustingDelay target:self selector:@selector(timerTriggered) userInfo:nil repeats:NO];
+    if (self.adjustNewCropEnabled){
+        if (self.resetTimer)
+            return;
+
+        self.resetTimer = [NSTimer scheduledTimerWithTimeInterval:self.cropAdjustingDelay target:self selector:@selector(timerTriggered) userInfo:nil repeats:NO];
+    }
 }
 
 - (void)timerTriggered

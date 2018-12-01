@@ -99,6 +99,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL internalLayoutDisabled;
 
 /**
+
+ */
+@property (nonatomic, assign) BOOL cropFrameMoveEnabled;
+
+/**
  A width x height ratio that the crop box will be rescaled to (eg 4:3 is {4.0f, 3.0f})
  Setting it to CGSizeZero will reset the aspect ratio to the image's own ratio.
  */

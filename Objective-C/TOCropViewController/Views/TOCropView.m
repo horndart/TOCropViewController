@@ -434,271 +434,286 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     CGFloat xDelta = ceilf(point.x - self.panOriginPoint.x);
     CGFloat yDelta = ceilf(point.y - self.panOriginPoint.y);
 
-    //Current aspect ratio of the crop box in case we need to clamp it
-    CGFloat aspectRatio = (originFrame.size.width / originFrame.size.height);
+    if(self.cropFrameMoveEnabled){
+        self.cropViewPadding = 0;
+        frame.origin.x   = originFrame.origin.x + xDelta;
+        frame.origin.y   = originFrame.origin.y + yDelta;
 
-    //Note whether we're being aspect transformed horizontally or vertically
-    BOOL aspectHorizontal = NO, aspectVertical = NO;
-    
-    //Depending on which corner we drag from, set the appropriate min flag to
-    //ensure we can properly clamp the XY value of the box if it overruns the minimum size
-    //(Otherwise the image itself will slide with the drag gesture)
-    BOOL clampMinFromTop = NO, clampMinFromLeft = NO;
+        //Clamp the X position of the box to the interior of the cropping bounds
+        frame.origin.x = MAX(frame.origin.x, CGRectGetMinX(contentFrame));
+        frame.origin.x = MIN(frame.origin.x, CGRectGetMaxX(contentFrame) - frame.size.width);
 
-    switch (self.tappedEdge) {
-        case TOCropViewOverlayEdgeLeft:
-            if (self.aspectRatioLockEnabled) {
-                aspectHorizontal = YES;
-                xDelta = MAX(xDelta, 0);
-                CGPoint scaleOrigin = (CGPoint){CGRectGetMaxX(originFrame), CGRectGetMidY(originFrame)};
-                frame.size.height = frame.size.width / aspectRatio;
-                frame.origin.y = scaleOrigin.y - (frame.size.height * 0.5f);
-            }
-            CGFloat newWidth = originFrame.size.width - xDelta;
-            CGFloat newHeight = originFrame.size.height;
-            if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
-                frame.origin.x   = originFrame.origin.x + xDelta;
-                frame.size.width = originFrame.size.width - xDelta;
-            }
-            
-            clampMinFromLeft = YES;
-            
-            break;
-        case TOCropViewOverlayEdgeRight:
-            if (self.aspectRatioLockEnabled) {
-                aspectHorizontal = YES;
-                CGPoint scaleOrigin = (CGPoint){CGRectGetMinX(originFrame), CGRectGetMidY(originFrame)};
-                frame.size.height = frame.size.width / aspectRatio;
-                frame.origin.y = scaleOrigin.y - (frame.size.height * 0.5f);
-                frame.size.width = originFrame.size.width + xDelta;
-                frame.size.width = MIN(frame.size.width, contentFrame.size.height * aspectRatio);
-            }
-            else {
-                CGFloat newWidth = originFrame.size.width + xDelta;
-                CGFloat newHeight = originFrame.size.height;
-                if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
-                    frame.size.width = originFrame.size.width + xDelta;
+        //Clamp the Y postion of the box to the interior of the cropping bounds
+        frame.origin.y = MAX(frame.origin.y, CGRectGetMinY(contentFrame));
+        frame.origin.y = MIN(frame.origin.y, CGRectGetMaxY(contentFrame) - frame.size.height);
+    }else{
+
+        //Current aspect ratio of the crop box in case we need to clamp it
+        CGFloat aspectRatio = (originFrame.size.width / originFrame.size.height);
+
+        //Note whether we're being aspect transformed horizontally or vertically
+        BOOL aspectHorizontal = NO, aspectVertical = NO;
+
+        //Depending on which corner we drag from, set the appropriate min flag to
+        //ensure we can properly clamp the XY value of the box if it overruns the minimum size
+        //(Otherwise the image itself will slide with the drag gesture)
+        BOOL clampMinFromTop = NO, clampMinFromLeft = NO;
+
+        switch (self.tappedEdge) {
+            case TOCropViewOverlayEdgeLeft:
+                if (self.aspectRatioLockEnabled) {
+                    aspectHorizontal = YES;
+                    xDelta = MAX(xDelta, 0);
+                    CGPoint scaleOrigin = (CGPoint){CGRectGetMaxX(originFrame), CGRectGetMidY(originFrame)};
+                    frame.size.height = frame.size.width / aspectRatio;
+                    frame.origin.y = scaleOrigin.y - (frame.size.height * 0.5f);
                 }
-            }
-            
-            break;
-        case TOCropViewOverlayEdgeBottom:
-            if (self.aspectRatioLockEnabled) {
-                aspectVertical = YES;
-                CGPoint scaleOrigin = (CGPoint){CGRectGetMidX(originFrame), CGRectGetMinY(originFrame)};
-                frame.size.width = frame.size.height * aspectRatio;
-                frame.origin.x = scaleOrigin.x - (frame.size.width * 0.5f);
-                frame.size.height = originFrame.size.height + yDelta;
-                frame.size.height = MIN(frame.size.height, contentFrame.size.width / aspectRatio);
-            }
-            else {
-                CGFloat newWidth = originFrame.size.width;
-                CGFloat newHeight = originFrame.size.height + yDelta;
-                
-                if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
-                    frame.size.height = originFrame.size.height + yDelta;
-                }
-            }
-            break;
-        case TOCropViewOverlayEdgeTop:
-            if (self.aspectRatioLockEnabled) {
-                aspectVertical = YES;
-                yDelta = MAX(0,yDelta);
-                CGPoint scaleOrigin = (CGPoint){CGRectGetMidX(originFrame), CGRectGetMaxY(originFrame)};
-                frame.size.width = frame.size.height * aspectRatio;
-                frame.origin.x = scaleOrigin.x - (frame.size.width * 0.5f);
-                frame.origin.y    = originFrame.origin.y + yDelta;
-                frame.size.height = originFrame.size.height - yDelta;
-            }
-            else {
-                CGFloat newWidth = originFrame.size.width;
-                CGFloat newHeight = originFrame.size.height - yDelta;
-                
-                if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
-                    frame.origin.y    = originFrame.origin.y + yDelta;
-                    frame.size.height = originFrame.size.height - yDelta;
-                }
-            }
-            
-            clampMinFromTop = YES;
-            
-            break;
-        case TOCropViewOverlayEdgeTopLeft:
-            if (self.aspectRatioLockEnabled) {
-                xDelta = MAX(xDelta, 0);
-                yDelta = MAX(yDelta, 0);
-                
-                CGPoint distance;
-                distance.x = 1.0f - (xDelta / CGRectGetWidth(originFrame));
-                distance.y = 1.0f - (yDelta / CGRectGetHeight(originFrame));
-                
-                CGFloat scale = (distance.x + distance.y) * 0.5f;
-                
-                frame.size.width = ceilf(CGRectGetWidth(originFrame) * scale);
-                frame.size.height = ceilf(CGRectGetHeight(originFrame) * scale);
-                frame.origin.x = originFrame.origin.x + (CGRectGetWidth(originFrame) - frame.size.width);
-                frame.origin.y = originFrame.origin.y + (CGRectGetHeight(originFrame) - frame.size.height);
-                
-                aspectVertical = YES;
-                aspectHorizontal = YES;
-            }
-            else {
                 CGFloat newWidth = originFrame.size.width - xDelta;
-                CGFloat newHeight = originFrame.size.height - yDelta;
-                
+                CGFloat newHeight = originFrame.size.height;
                 if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
                     frame.origin.x   = originFrame.origin.x + xDelta;
                     frame.size.width = originFrame.size.width - xDelta;
-                    frame.origin.y   = originFrame.origin.y + yDelta;
-                    frame.size.height = originFrame.size.height - yDelta;
                 }
-            }
-            
-            clampMinFromTop = YES;
-            clampMinFromLeft = YES;
-            
-            break;
-        case TOCropViewOverlayEdgeTopRight:
-            if (self.aspectRatioLockEnabled) {
-                xDelta = MIN(xDelta, 0);
-                yDelta = MAX(yDelta, 0);
-                
-                CGPoint distance;
-                distance.x = 1.0f - ((-xDelta) / CGRectGetWidth(originFrame));
-                distance.y = 1.0f - ((yDelta) / CGRectGetHeight(originFrame));
-                
-                CGFloat scale = (distance.x + distance.y) * 0.5f;
-                
-                frame.size.width = ceilf(CGRectGetWidth(originFrame) * scale);
-                frame.size.height = ceilf(CGRectGetHeight(originFrame) * scale);
-                frame.origin.y = originFrame.origin.y + (CGRectGetHeight(originFrame) - frame.size.height);
-                
-                aspectVertical = YES;
-                aspectHorizontal = YES;
-            }
-            else {
-                CGFloat newWidth = originFrame.size.width + xDelta;
-                CGFloat newHeight = originFrame.size.height - yDelta;
-                
-                if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
-                    frame.size.width  = originFrame.size.width + xDelta;
+
+                clampMinFromLeft = YES;
+
+                break;
+            case TOCropViewOverlayEdgeRight:
+                if (self.aspectRatioLockEnabled) {
+                    aspectHorizontal = YES;
+                    CGPoint scaleOrigin = (CGPoint){CGRectGetMinX(originFrame), CGRectGetMidY(originFrame)};
+                    frame.size.height = frame.size.width / aspectRatio;
+                    frame.origin.y = scaleOrigin.y - (frame.size.height * 0.5f);
+                    frame.size.width = originFrame.size.width + xDelta;
+                    frame.size.width = MIN(frame.size.width, contentFrame.size.height * aspectRatio);
+                }
+                else {
+                    CGFloat newWidth = originFrame.size.width + xDelta;
+                    CGFloat newHeight = originFrame.size.height;
+                    if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
+                        frame.size.width = originFrame.size.width + xDelta;
+                    }
+                }
+
+                break;
+            case TOCropViewOverlayEdgeBottom:
+                if (self.aspectRatioLockEnabled) {
+                    aspectVertical = YES;
+                    CGPoint scaleOrigin = (CGPoint){CGRectGetMidX(originFrame), CGRectGetMinY(originFrame)};
+                    frame.size.width = frame.size.height * aspectRatio;
+                    frame.origin.x = scaleOrigin.x - (frame.size.width * 0.5f);
+                    frame.size.height = originFrame.size.height + yDelta;
+                    frame.size.height = MIN(frame.size.height, contentFrame.size.width / aspectRatio);
+                }
+                else {
+                    CGFloat newWidth = originFrame.size.width;
+                    CGFloat newHeight = originFrame.size.height + yDelta;
+
+                    if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
+                        frame.size.height = originFrame.size.height + yDelta;
+                    }
+                }
+                break;
+            case TOCropViewOverlayEdgeTop:
+                if (self.aspectRatioLockEnabled) {
+                    aspectVertical = YES;
+                    yDelta = MAX(0,yDelta);
+                    CGPoint scaleOrigin = (CGPoint){CGRectGetMidX(originFrame), CGRectGetMaxY(originFrame)};
+                    frame.size.width = frame.size.height * aspectRatio;
+                    frame.origin.x = scaleOrigin.x - (frame.size.width * 0.5f);
                     frame.origin.y    = originFrame.origin.y + yDelta;
                     frame.size.height = originFrame.size.height - yDelta;
                 }
-            }
-            
-            clampMinFromTop = YES;
-            
-            break;
-        case TOCropViewOverlayEdgeBottomLeft:
-            if (self.aspectRatioLockEnabled) {
-                CGPoint distance;
-                distance.x = 1.0f - (xDelta / CGRectGetWidth(originFrame));
-                distance.y = 1.0f - (-yDelta / CGRectGetHeight(originFrame));
-                
-                CGFloat scale = (distance.x + distance.y) * 0.5f;
-                
-                frame.size.width = ceilf(CGRectGetWidth(originFrame) * scale);
-                frame.size.height = ceilf(CGRectGetHeight(originFrame) * scale);
-                frame.origin.x = CGRectGetMaxX(originFrame) - frame.size.width;
-                
-                aspectVertical = YES;
-                aspectHorizontal = YES;
-            }
-            else {
-                CGFloat newWidth = originFrame.size.width - xDelta;
-                CGFloat newHeight = originFrame.size.height + yDelta;
-                
-                if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
-                    frame.size.height = originFrame.size.height + yDelta;
-                    frame.origin.x    = originFrame.origin.x + xDelta;
-                    frame.size.width  = originFrame.size.width - xDelta;
+                else {
+                    CGFloat newWidth = originFrame.size.width;
+                    CGFloat newHeight = originFrame.size.height - yDelta;
+
+                    if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
+                        frame.origin.y    = originFrame.origin.y + yDelta;
+                        frame.size.height = originFrame.size.height - yDelta;
+                    }
                 }
-            }
-            
-            clampMinFromLeft = YES;
-            
-            break;
-        case TOCropViewOverlayEdgeBottomRight:
-            if (self.aspectRatioLockEnabled) {
-                
-                CGPoint distance;
-                distance.x = 1.0f - ((-1 * xDelta) / CGRectGetWidth(originFrame));
-                distance.y = 1.0f - ((-1 * yDelta) / CGRectGetHeight(originFrame));
-                
-                CGFloat scale = (distance.x + distance.y) * 0.5f;
-                
-                frame.size.width = ceilf(CGRectGetWidth(originFrame) * scale);
-                frame.size.height = ceilf(CGRectGetHeight(originFrame) * scale);
-                
-                aspectVertical = YES;
-                aspectHorizontal = YES;
-            }
-            else {
-                CGFloat newWidth = originFrame.size.width + xDelta;
-                CGFloat newHeight = originFrame.size.height + yDelta;
-                
-                if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
-                    frame.size.height = originFrame.size.height + yDelta;
-                    frame.size.width = originFrame.size.width + xDelta;
+
+                clampMinFromTop = YES;
+
+                break;
+            case TOCropViewOverlayEdgeTopLeft:
+                if (self.aspectRatioLockEnabled) {
+                    xDelta = MAX(xDelta, 0);
+                    yDelta = MAX(yDelta, 0);
+
+                    CGPoint distance;
+                    distance.x = 1.0f - (xDelta / CGRectGetWidth(originFrame));
+                    distance.y = 1.0f - (yDelta / CGRectGetHeight(originFrame));
+
+                    CGFloat scale = (distance.x + distance.y) * 0.5f;
+
+                    frame.size.width = ceilf(CGRectGetWidth(originFrame) * scale);
+                    frame.size.height = ceilf(CGRectGetHeight(originFrame) * scale);
+                    frame.origin.x = originFrame.origin.x + (CGRectGetWidth(originFrame) - frame.size.width);
+                    frame.origin.y = originFrame.origin.y + (CGRectGetHeight(originFrame) - frame.size.height);
+
+                    aspectVertical = YES;
+                    aspectHorizontal = YES;
                 }
-            }
-            break;
-        case TOCropViewOverlayEdgeNone: break;
-    }
-    
-    //The absolute max/min size the box may be in the bounds of the crop view
-    CGSize minSize = (CGSize){kTOCropViewMinimumBoxSize, kTOCropViewMinimumBoxSize};
-    CGSize maxSize = (CGSize){CGRectGetWidth(contentFrame), CGRectGetHeight(contentFrame)};
-    
-    //clamp the box to ensure it doesn't go beyond the bounds we've set
-    if (self.aspectRatioLockEnabled && aspectHorizontal) {
-        maxSize.height = contentFrame.size.width / aspectRatio;
-        minSize.width = kTOCropViewMinimumBoxSize * aspectRatio;
-    }
-        
-    if (self.aspectRatioLockEnabled && aspectVertical) {
-        maxSize.width = contentFrame.size.height * aspectRatio;
-        minSize.height = kTOCropViewMinimumBoxSize / aspectRatio;
+                else {
+                    CGFloat newWidth = originFrame.size.width - xDelta;
+                    CGFloat newHeight = originFrame.size.height - yDelta;
+
+                    if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
+                        frame.origin.x   = originFrame.origin.x + xDelta;
+                        frame.size.width = originFrame.size.width - xDelta;
+                        frame.origin.y   = originFrame.origin.y + yDelta;
+                        frame.size.height = originFrame.size.height - yDelta;
+                    }
+                }
+
+                clampMinFromTop = YES;
+                clampMinFromLeft = YES;
+
+                break;
+            case TOCropViewOverlayEdgeTopRight:
+                if (self.aspectRatioLockEnabled) {
+                    xDelta = MIN(xDelta, 0);
+                    yDelta = MAX(yDelta, 0);
+
+                    CGPoint distance;
+                    distance.x = 1.0f - ((-xDelta) / CGRectGetWidth(originFrame));
+                    distance.y = 1.0f - ((yDelta) / CGRectGetHeight(originFrame));
+
+                    CGFloat scale = (distance.x + distance.y) * 0.5f;
+
+                    frame.size.width = ceilf(CGRectGetWidth(originFrame) * scale);
+                    frame.size.height = ceilf(CGRectGetHeight(originFrame) * scale);
+                    frame.origin.y = originFrame.origin.y + (CGRectGetHeight(originFrame) - frame.size.height);
+
+                    aspectVertical = YES;
+                    aspectHorizontal = YES;
+                }
+                else {
+                    CGFloat newWidth = originFrame.size.width + xDelta;
+                    CGFloat newHeight = originFrame.size.height - yDelta;
+
+                    if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
+                        frame.size.width  = originFrame.size.width + xDelta;
+                        frame.origin.y    = originFrame.origin.y + yDelta;
+                        frame.size.height = originFrame.size.height - yDelta;
+                    }
+                }
+
+                clampMinFromTop = YES;
+
+                break;
+            case TOCropViewOverlayEdgeBottomLeft:
+                if (self.aspectRatioLockEnabled) {
+                    CGPoint distance;
+                    distance.x = 1.0f - (xDelta / CGRectGetWidth(originFrame));
+                    distance.y = 1.0f - (-yDelta / CGRectGetHeight(originFrame));
+
+                    CGFloat scale = (distance.x + distance.y) * 0.5f;
+
+                    frame.size.width = ceilf(CGRectGetWidth(originFrame) * scale);
+                    frame.size.height = ceilf(CGRectGetHeight(originFrame) * scale);
+                    frame.origin.x = CGRectGetMaxX(originFrame) - frame.size.width;
+
+                    aspectVertical = YES;
+                    aspectHorizontal = YES;
+                }
+                else {
+                    CGFloat newWidth = originFrame.size.width - xDelta;
+                    CGFloat newHeight = originFrame.size.height + yDelta;
+
+                    if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
+                        frame.size.height = originFrame.size.height + yDelta;
+                        frame.origin.x    = originFrame.origin.x + xDelta;
+                        frame.size.width  = originFrame.size.width - xDelta;
+                    }
+                }
+
+                clampMinFromLeft = YES;
+
+                break;
+            case TOCropViewOverlayEdgeBottomRight:
+                if (self.aspectRatioLockEnabled) {
+
+                    CGPoint distance;
+                    distance.x = 1.0f - ((-1 * xDelta) / CGRectGetWidth(originFrame));
+                    distance.y = 1.0f - ((-1 * yDelta) / CGRectGetHeight(originFrame));
+
+                    CGFloat scale = (distance.x + distance.y) * 0.5f;
+
+                    frame.size.width = ceilf(CGRectGetWidth(originFrame) * scale);
+                    frame.size.height = ceilf(CGRectGetHeight(originFrame) * scale);
+
+                    aspectVertical = YES;
+                    aspectHorizontal = YES;
+                }
+                else {
+                    CGFloat newWidth = originFrame.size.width + xDelta;
+                    CGFloat newHeight = originFrame.size.height + yDelta;
+
+                    if (MIN(newHeight, newWidth) / MAX(newHeight, newWidth) >= (double)_minimumAspectRatio) {
+                        frame.size.height = originFrame.size.height + yDelta;
+                        frame.size.width = originFrame.size.width + xDelta;
+                    }
+                }
+                break;
+            case TOCropViewOverlayEdgeNone: break;
+        }
+
+        //The absolute max/min size the box may be in the bounds of the crop view
+        CGSize minSize = (CGSize){kTOCropViewMinimumBoxSize, kTOCropViewMinimumBoxSize};
+        CGSize maxSize = (CGSize){CGRectGetWidth(contentFrame), CGRectGetHeight(contentFrame)};
+
+        //clamp the box to ensure it doesn't go beyond the bounds we've set
+        if (self.aspectRatioLockEnabled && aspectHorizontal) {
+            maxSize.height = contentFrame.size.width / aspectRatio;
+            minSize.width = kTOCropViewMinimumBoxSize * aspectRatio;
+        }
+
+        if (self.aspectRatioLockEnabled && aspectVertical) {
+            maxSize.width = contentFrame.size.height * aspectRatio;
+            minSize.height = kTOCropViewMinimumBoxSize / aspectRatio;
+        }
+
+        // Clamp the width if it goes over
+        if (clampMinFromLeft) {
+            CGFloat maxWidth = CGRectGetMaxX(self.cropOriginFrame) - contentFrame.origin.x;
+            frame.size.width = MIN(frame.size.width, maxWidth);
+        }
+
+        if (clampMinFromTop) {
+            CGFloat maxHeight = CGRectGetMaxY(self.cropOriginFrame) - contentFrame.origin.y;
+            frame.size.height = MIN(frame.size.height, maxHeight);
+        }
+
+        //Clamp the minimum size
+        frame.size.width  = MAX(frame.size.width, minSize.width);
+        frame.size.height = MAX(frame.size.height, minSize.height);
+
+        //Clamp the maximum size
+        frame.size.width  = MIN(frame.size.width, maxSize.width);
+        frame.size.height = MIN(frame.size.height, maxSize.height);
+
+        //Clamp the X position of the box to the interior of the cropping bounds
+        frame.origin.x = MAX(frame.origin.x, CGRectGetMinX(contentFrame));
+        frame.origin.x = MIN(frame.origin.x, CGRectGetMaxX(contentFrame) - minSize.width);
+
+        //Clamp the Y postion of the box to the interior of the cropping bounds
+        frame.origin.y = MAX(frame.origin.y, CGRectGetMinY(contentFrame));
+        frame.origin.y = MIN(frame.origin.y, CGRectGetMaxY(contentFrame) - minSize.height);
+
+        //Once the box is completely shrunk, clamp its ability to move
+        if (clampMinFromLeft && frame.size.width <= minSize.width + FLT_EPSILON) {
+            frame.origin.x = CGRectGetMaxX(originFrame) - minSize.width;
+        }
+
+        //Once the box is completely shrunk, clamp its ability to move
+        if (clampMinFromTop && frame.size.height <= minSize.height + FLT_EPSILON) {
+            frame.origin.y = CGRectGetMaxY(originFrame) - minSize.height;
+        }
     }
 
-    // Clamp the width if it goes over
-    if (clampMinFromLeft) {
-        CGFloat maxWidth = CGRectGetMaxX(self.cropOriginFrame) - contentFrame.origin.x;
-        frame.size.width = MIN(frame.size.width, maxWidth);
-    }
-
-    if (clampMinFromTop) {
-        CGFloat maxHeight = CGRectGetMaxY(self.cropOriginFrame) - contentFrame.origin.y;
-        frame.size.height = MIN(frame.size.height, maxHeight);
-    }
-
-    //Clamp the minimum size
-    frame.size.width  = MAX(frame.size.width, minSize.width);
-    frame.size.height = MAX(frame.size.height, minSize.height);
-    
-    //Clamp the maximum size
-    frame.size.width  = MIN(frame.size.width, maxSize.width);
-    frame.size.height = MIN(frame.size.height, maxSize.height);
-
-    //Clamp the X position of the box to the interior of the cropping bounds
-    frame.origin.x = MAX(frame.origin.x, CGRectGetMinX(contentFrame));
-    frame.origin.x = MIN(frame.origin.x, CGRectGetMaxX(contentFrame) - minSize.width);
-
-    //Clamp the Y postion of the box to the interior of the cropping bounds
-    frame.origin.y = MAX(frame.origin.y, CGRectGetMinY(contentFrame));
-    frame.origin.y = MIN(frame.origin.y, CGRectGetMaxY(contentFrame) - minSize.height);
-    
-    //Once the box is completely shrunk, clamp its ability to move
-    if (clampMinFromLeft && frame.size.width <= minSize.width + FLT_EPSILON) {
-        frame.origin.x = CGRectGetMaxX(originFrame) - minSize.width;
-    }
-    
-    //Once the box is completely shrunk, clamp its ability to move
-    if (clampMinFromTop && frame.size.height <= minSize.height + FLT_EPSILON) {
-        frame.origin.y = CGRectGetMaxY(originFrame) - minSize.height;
-    }
-    
     self.cropBoxFrame = frame;
     
     [self checkForCanReset];

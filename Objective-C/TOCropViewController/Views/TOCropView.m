@@ -30,7 +30,7 @@
 
 static const CGFloat kTOCropViewPadding = 14.0f;
 static const NSTimeInterval kTOCropTimerDuration = 0.8f;
-static const CGFloat kTOCropViewMinimumBoxSize = 10.0f;
+static const CGFloat kTOCropViewMinimumBoxSize = 5.0f;
 static const CGFloat kTOCropViewCircularPathRadius = 300.0f;
 static const CGFloat kTOMaximumZoomScale = 15.0f;
 

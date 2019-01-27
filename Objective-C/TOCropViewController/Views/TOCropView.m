@@ -152,6 +152,7 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     self.restoreAngle = 0;
     self.cropAdjustingDelay = kTOCropTimerDuration;
     self.adjustNewCropEnabled = YES;
+    self.fitImageInitialLayout = NO;
     self.cropViewPadding = kTOCropViewPadding;
     self.maximumZoomScale = kTOMaximumZoomScale;
     
@@ -325,10 +326,18 @@ typedef NS_ENUM(NSInteger, TOCropViewOverlayEdge) {
     frame.origin.x = bounds.origin.x + floorf((CGRectGetWidth(bounds) - frame.size.width) * 0.5f);
     frame.origin.y = bounds.origin.y + floorf((CGRectGetHeight(bounds) - frame.size.height) * 0.5f);
     self.cropBoxFrame = frame;
-    
-    //set the fully zoomed out state initially
-    self.scrollView.zoomScale = self.scrollView.minimumZoomScale;
-    self.scrollView.contentSize = scaledSize;
+
+    if(self.fitImageInitialLayout){
+        scale = MIN(CGRectGetWidth(self.scrollView.bounds)/imageSize.width, CGRectGetHeight(self.scrollView.bounds)/imageSize.height);
+        scaledSize = (CGSize){floorf(imageSize.width * scale), floorf(imageSize.height * scale)};
+
+        self.scrollView.zoomScale = scale;
+        self.scrollView.contentSize = scaledSize;
+    }else{
+        //set the fully zoomed out state initially
+        self.scrollView.zoomScale = self.scrollView.minimumZoomScale;
+        self.scrollView.contentSize = scaledSize;
+    }
     
     // If we ended up with a smaller crop box than the content, line up the content so its center
     // is in the center of the cropbox

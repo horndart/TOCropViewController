@@ -35,8 +35,15 @@ NS_ASSUME_NONNULL_BEGIN
 /** Add/Remove the interior vertical grid lines. */
 @property (nonatomic, assign) BOOL displayVerticalGridLines;
 
+@property (nonatomic, assign) CGFloat cornerThickness;
+@property (nonatomic, assign) CGFloat outerHalfThickness;
+
+
 /** Shows and hides the interior grid lines with an optional crossfade animation. */
 - (void)setGridHidden:(BOOL)hidden animated:(BOOL)animated;
+
+- (void)setOuterColor:(UIColor *)color;
+- (void)setGridColor:(UIColor *)color;
 
 @end
 

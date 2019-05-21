@@ -179,6 +179,8 @@ The minimum croping aspect ratio. If set, user is prevented from setting croppin
 */
 @property (nonatomic, assign) CGFloat minimumAspectRatio;
 
+@property (nonatomic, assign) CGFloat minimumBoxSize;
+
 /**
  The maximum scale that user can apply to image by pinching to zoom. Small values are only recomended with aspectRatioLockEnabled set to true. Default to 15.0
  */

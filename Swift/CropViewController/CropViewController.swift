@@ -95,7 +95,7 @@ open class CropViewController: UIViewController, TOCropViewControllerDelegate {
      The view controller's delegate that will receive the resulting
      cropped image, as well as crop information.
     */
-    public var delegate: CropViewControllerDelegate? {
+    public weak var delegate: CropViewControllerDelegate? {
         didSet { self.setUpDelegateHandlers() }
     }
     
@@ -236,6 +236,15 @@ open class CropViewController: UIViewController, TOCropViewControllerDelegate {
     public var rotateButtonsHidden: Bool {
         set { toCropViewController.rotateButtonsHidden = newValue }
         get { return toCropViewController.rotateButtonsHidden }
+    }
+    /**
+     When enabled, hides the 'Reset' button on the toolbar.
+
+     Default is false.
+     */
+    public var resetButtonHidden: Bool {
+        set { toCropViewController.resetButtonHidden = newValue }
+        get { return toCropViewController.resetButtonHidden }
     }
     
     /**
@@ -548,6 +557,7 @@ open class CropViewController: UIViewController, TOCropViewControllerDelegate {
 
 extension CropViewController {
     fileprivate func setUpCropController() {
+        modalPresentationStyle = .fullScreen
         addChild(toCropViewController)
         transitioningDelegate = (toCropViewController as! UIViewControllerTransitioningDelegate)
         toCropViewController.delegate = self

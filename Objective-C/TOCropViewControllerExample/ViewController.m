@@ -18,11 +18,6 @@
 @property (nonatomic, assign) CGRect croppedFrame;
 @property (nonatomic, assign) NSInteger angle;
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-@property (nonatomic, strong) UIPopoverController *activityPopoverController;
-#pragma clang diagnostic pop
-
 @end
 
 @implementation ViewController
@@ -50,12 +45,26 @@
     // -- Uncomment this line of code to place the toolbar at the top of the view controller --
     //cropController.toolbarPosition = TOCropViewControllerToolbarPositionTop;
     
+    // -- Uncomment this line of code to include only certain type of preset ratios
+    //cropController.allowedAspectRatios = @[@(TOCropViewControllerAspectRatioPresetOriginal),
+    //                                       @(TOCropViewControllerAspectRatioPresetSquare),
+    //                                       @(TOCropViewControllerAspectRatioPreset3x2)];
+
     //cropController.rotateButtonsHidden = YES;
     //cropController.rotateClockwiseButtonHidden = NO;
     
     //cropController.doneButtonTitle = @"Title";
     //cropController.cancelButtonTitle = @"Title";
-    
+
+    // -- Uncomment this line of code to show a confirmation dialog when cancelling --
+    //cropController.showCancelConfirmationDialog = YES;
+
+    // Uncomment this if you wish to always show grid
+    //cropController.cropView.alwaysShowCroppingGrid = YES;
+
+    // Uncomment this if you do not want translucency effect
+    //cropController.cropView.translucencyAlwaysHidden = YES;
+
     self.image = image;
     
     //If profile picture, push onto the same navigation stack
@@ -209,23 +218,15 @@
     [self presentViewController:alertController animated:YES completion:nil];
 }
 
-- (void)sharePhoto
+- (void)sharePhoto:(id)sender
 {
     if (self.imageView.image == nil)
         return;
     
     UIActivityViewController *activityController = [[UIActivityViewController alloc] initWithActivityItems:@[self.imageView.image] applicationActivities:nil];
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-        [self presentViewController:activityController animated:YES completion:nil];
-    }
-    else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        [self.activityPopoverController dismissPopoverAnimated:NO];
-        self.activityPopoverController = [[UIPopoverController alloc] initWithContentViewController:activityController];
-        [self.activityPopoverController presentPopoverFromBarButtonItem:self.navigationItem.rightBarButtonItem permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-#pragma clang diagnostic pop
-    }
+    activityController.modalPresentationStyle = UIModalPresentationPopover;
+    activityController.popoverPresentationController.barButtonItem = sender;
+    [self presentViewController:activityController animated:YES completion:nil];
 }
 
 - (void)dismissViewController {
@@ -244,7 +245,7 @@
 #if TARGET_APP_EXTENSION
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(dismissViewController)];
 #else
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(sharePhoto)];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(sharePhoto:)];
     self.navigationItem.rightBarButtonItem.enabled = NO;
 #endif
     
